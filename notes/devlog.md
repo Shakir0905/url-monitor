@@ -11,3 +11,4 @@ Learning notes and references.
 - 2026-05-09: Notes on JWT vs session-based authentication trade-offs
 - 2026-05-09: Reviewed bcrypt cost factor selection
 - 2026-05-10: Reviewed Go context propagation patterns across goroutines
+- 2026-05-10: Explored service mesh concepts (Istio, Linkerd)
