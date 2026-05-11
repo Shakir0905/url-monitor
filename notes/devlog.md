@@ -13,3 +13,4 @@ Learning notes and references.
 - 2026-05-10: Reviewed Go context propagation patterns across goroutines
 - 2026-05-10: Explored service mesh concepts (Istio, Linkerd)
 - 2026-05-11: Read about Kubernetes pod lifecycle and probes
+- 2026-05-11: Read about Postgres index types and when to use each
