@@ -12,3 +12,4 @@ Learning notes and references.
 - 2026-05-09: Reviewed bcrypt cost factor selection
 - 2026-05-10: Reviewed Go context propagation patterns across goroutines
 - 2026-05-10: Explored service mesh concepts (Istio, Linkerd)
+- 2026-05-11: Read about Kubernetes pod lifecycle and probes
