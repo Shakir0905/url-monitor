@@ -16,3 +16,4 @@ Learning notes and references.
 - 2026-05-11: Read about Postgres index types and when to use each
 - 2026-05-11: Notes on JWT vs session-based authentication trade-offs
 - 2026-05-12: Explored Go memory model and happens-before guarantees
+- 2026-05-12: Explored service mesh concepts (Istio, Linkerd)
