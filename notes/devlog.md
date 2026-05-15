@@ -20,3 +20,4 @@ Learning notes and references.
 - 2026-05-13: Reviewed gRPC streaming patterns (server, client, bidirectional)
 - 2026-05-13: Reviewed bcrypt cost factor selection
 - 2026-05-15: Read about Postgres index types and when to use each
+- 2026-05-15: Read about Kubernetes pod lifecycle and probes
