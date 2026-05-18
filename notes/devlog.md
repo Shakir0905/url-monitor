@@ -25,3 +25,4 @@ Learning notes and references.
 - 2026-05-17: Notes on JWT vs session-based authentication trade-offs
 - 2026-05-17: Reviewed gRPC streaming patterns (server, client, bidirectional)
 - 2026-05-17: Reviewed observability three pillars: metrics, logs, traces
+- 2026-05-18: Reviewed bcrypt cost factor selection
