@@ -28,3 +28,4 @@ Learning notes and references.
 - 2026-05-18: Reviewed bcrypt cost factor selection
 - 2026-05-20: Reviewed gRPC streaming patterns (server, client, bidirectional)
 - 2026-05-20: Reviewed bcrypt cost factor selection
+- 2026-05-20: Explored Go memory model and happens-before guarantees
