@@ -31,3 +31,4 @@ Learning notes and references.
 - 2026-05-20: Explored Go memory model and happens-before guarantees
 - 2026-05-22: Read about microservices saga pattern for distributed transactions
 - 2026-05-22: Read about distributed consensus algorithms (Raft, Paxos)
+- 2026-05-23: Read about Postgres index types and when to use each
