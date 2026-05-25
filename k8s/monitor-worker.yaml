@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitor-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: monitor-worker
+  template:
+    metadata:
+      labels:
+        app: monitor-worker
+    spec:
+      containers:
+      - name: worker
+        image: url-monitor/monitor-worker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9194
+          name: metrics
+        env:
+        - name: METRICS_PORT
+          value: "9194"
+        - name: URL_SERVICE_ADDR
+          value: url-service:50052
+        - name: KAFKA_BROKERS
+          value: kafka:9092
+        - name: POLL_INTERVAL
+          value: "30s"
+        - name: HTTP_TIMEOUT
+          value: "10s"
+        - name: MAX_CONCURRENCY
+          value: "10"
+        - name: CHECKED_TOPIC
+          value: url.checked
+        - name: STATUS_CHANGED_TOPIC
+          value: url.status_changed
+        - name: DB_HOST
+          value: postgres
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: app
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: DB_NAME
+          value: url_monitor

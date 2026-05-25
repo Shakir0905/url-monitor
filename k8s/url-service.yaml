@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: url-service
+  template:
+    metadata:
+      labels:
+        app: url-service
+    spec:
+      containers:
+      - name: url
+        image: url-monitor/url:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 50052
+          name: grpc
+        - containerPort: 9192
+          name: metrics
+        env:
+        - name: GRPC_PORT
+          value: "50052"
+        - name: METRICS_PORT
+          value: "9192"
+        - name: DB_HOST
+          value: postgres
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: app
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: DB_NAME
+          value: url_monitor
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-service
+spec:
+  selector:
+    app: url-service
+  ports:
+  - name: grpc
+    port: 50052
+    targetPort: 50052
+  - name: metrics
+    port: 9192
+    targetPort: 9192

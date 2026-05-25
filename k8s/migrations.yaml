@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: migrations
+data:
+  001_users.up.sql: |
+    CREATE TABLE IF NOT EXISTS users (
+      id BIGSERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  002_urls.up.sql: |
+    CREATE TABLE IF NOT EXISTS urls (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      url TEXT NOT NULL,
+      check_interval_seconds INT NOT NULL DEFAULT 60,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_checked_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_urls_user_id ON urls(user_id);
+    CREATE INDEX IF NOT EXISTS idx_urls_is_active ON urls(is_active);
+  003_checks.up.sql: |
+    CREATE TABLE IF NOT EXISTS checks (
+      id BIGSERIAL PRIMARY KEY,
+      url_id BIGINT NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
+      status_code INT,
+      response_time_ms INT NOT NULL,
+      is_up BOOLEAN NOT NULL,
+      error_message TEXT,
+      checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_checks_url_id ON checks(url_id);
+    CREATE INDEX IF NOT EXISTS idx_checks_checked_at ON checks(checked_at DESC);
+  004_notifications.up.sql: |
+    CREATE TABLE IF NOT EXISTS notifications (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      url_id BIGINT NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
+      channel TEXT NOT NULL,
+      status TEXT NOT NULL,
+      payload JSONB,
+      sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: psql
+        image: postgres:16-alpine
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          for f in /migrations/*.up.sql; do
+            echo "Applying $f"
+            psql -h postgres -U app -d url_monitor -f $f
+          done
+          echo "Done."
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: migrations
+          mountPath: /migrations
+      volumes:
+      - name: migrations
+        configMap:
+          name: migrations
