@@ -1,0 +1,34 @@
+# Env files with secrets
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+/auth-service
+/url-service
+/monitor-worker
+/analytics
+/gateway
+
+# Go
+*.exe
+*.test
+*.out
+vendor/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml

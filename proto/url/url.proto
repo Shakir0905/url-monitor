@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package url;
+
+option go_package = "github.com/shakir/url-monitor/proto/url;urlpb";
+
+import "google/protobuf/timestamp.proto";
+
+service URLService {
+  rpc CreateURL(CreateURLRequest) returns (URL);
+  rpc GetURL(GetURLRequest) returns (URL);
+  rpc ListURLs(ListURLsRequest) returns (ListURLsResponse);
+  rpc UpdateURL(UpdateURLRequest) returns (URL);
+  rpc DeleteURL(DeleteURLRequest) returns (DeleteURLResponse);
+  rpc ListActiveURLs(ListActiveURLsRequest) returns (ListURLsResponse);
+}
+
+message URL {
+  int64 id = 1;
+  int64 user_id = 2;
+  string url = 3;
+  int32 check_interval_seconds = 4;
+  bool is_active = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp last_checked_at = 8;
+}
+
+message CreateURLRequest {
+  int64 user_id = 1;
+  string url = 2;
+  int32 check_interval_seconds = 3;
+}
+
+message GetURLRequest {
+  int64 id = 1;
+  int64 user_id = 2;
+}
+
+message ListURLsRequest {
+  int64 user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListURLsResponse {
+  repeated URL urls = 1;
+  int32 total = 2;
+}
+
+message UpdateURLRequest {
+  int64 id = 1;
+  int64 user_id = 2;
+  string url = 3;
+  int32 check_interval_seconds = 4;
+  bool is_active = 5;
+}
+
+message DeleteURLRequest {
+  int64 id = 1;
+  int64 user_id = 2;
+}
+
+message DeleteURLResponse {
+  bool success = 1;
+}
+
+message ListActiveURLsRequest {
+  int32 limit = 1;
+}

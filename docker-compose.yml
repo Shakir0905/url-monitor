@@ -1,0 +1,277 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: url-monitor-postgres
+    restart: unless-stopped 
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: url-monitor-redis
+    restart: unless-stopped 
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: url-monitor-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: url-monitor-kafka
+    restart: unless-stopped 
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: url-monitor-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: url-monitor-prometheus
+    restart: unless-stopped 
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: url-monitor-grafana
+    restart: unless-stopped 
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+  
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: url-monitor-node-exporter
+    restart: unless-stopped 
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: url-monitor-cadvisor
+    restart: unless-stopped 
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  nvidia-exporter:
+    image: utkuozdemir/nvidia_gpu_exporter:1.2.0
+    container_name: url-monitor-nvidia-exporter
+    ports:
+      - "9835:9835"
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+  
+  auth-service:
+    build:
+      context: .
+      dockerfile: cmd/auth/Dockerfile
+    image: url-monitor/auth:latest
+    container_name: url-monitor-auth
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GRPC_PORT: 50051
+      METRICS_PORT: 9091
+      LOG_LEVEL: info
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: app
+      DB_PASSWORD: app_password
+      DB_NAME: url_monitor
+      JWT_SECRET: super_secret_change_in_production_at_least_32_chars
+      JWT_TTL: 24h
+      BCRYPT_COST: 10
+      MIN_PASSWORD_LEN: 8
+    ports:
+      - "50051:50051"
+      - "9091:9091"
+  
+  url-service:
+    build:
+      context: .
+      dockerfile: cmd/url/Dockerfile
+    image: url-monitor/url:latest
+    container_name: url-monitor-url
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GRPC_PORT: 50052
+      METRICS_PORT: 9192
+      LOG_LEVEL: info
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: app
+      DB_PASSWORD: app_password
+      DB_NAME: url_monitor
+    ports:
+      - "50052:50052"
+      - "9192:9192"
+  monitor-worker:
+    build:
+      context: .
+      dockerfile: cmd/monitor-worker/Dockerfile
+    image: url-monitor/monitor-worker:latest
+    container_name: url-monitor-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      url-service:
+        condition: service_started
+    environment:
+      METRICS_PORT: 9194
+      LOG_LEVEL: info
+      URL_SERVICE_ADDR: url-service:50052
+      KAFKA_BROKERS: kafka:29092
+      POLL_INTERVAL: 30s
+      HTTP_TIMEOUT: 10s
+      MAX_CONCURRENCY: 10
+      CHECKED_TOPIC: url.checked
+      STATUS_CHANGED_TOPIC: url.status_changed
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: app
+      DB_PASSWORD: app_password
+      DB_NAME: url_monitor
+    ports:
+      - "9194:9194"
+  analytics-service:
+    build:
+      context: .
+      dockerfile: cmd/analytics/Dockerfile
+    image: url-monitor/analytics:latest
+    container_name: url-monitor-analytics
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      GRPC_PORT: 50053
+      METRICS_PORT: 9193
+      DB_HOST: postgres
+      DB_USER: app
+      DB_PASSWORD: app_password
+      DB_NAME: url_monitor
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC: url.checked
+      KAFKA_GROUP: analytics-group
+    ports:
+      - "50053:50053"
+      - "9193:9193"
+  
+  gateway:
+    build:
+      context: .
+      dockerfile: cmd/gateway/Dockerfile
+    image: url-monitor/gateway:latest
+    container_name: url-monitor-gateway
+    restart: unless-stopped
+    depends_on:
+      auth-service:
+        condition: service_started
+      url-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+    environment:
+      HTTP_PORT: 8000
+      METRICS_PORT: 9195
+      AUTH_SERVICE_ADDR: auth-service:50051
+      URL_SERVICE_ADDR: url-service:50052
+      ANALYTICS_SERVICE_ADDR: analytics-service:50053
+    ports:
+      - "8000:8000"
+      - "9195:9195"
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
