@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	HTTPPort    int    `envconfig:"HTTP_PORT" default:"8000"`
-	MetricsPort int    `envconfig:"METRICS_PORT" default:"9195"`
+	HTTPPort    int `envconfig:"HTTP_PORT" default:"8000"`
+	MetricsPort int `envconfig:"METRICS_PORT" default:"9195"`
 
 	AuthServiceAddr      string `envconfig:"AUTH_SERVICE_ADDR" default:"localhost:50051"`
 	URLServiceAddr       string `envconfig:"URL_SERVICE_ADDR" default:"localhost:50052"`

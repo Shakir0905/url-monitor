@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+echo "Running gofmt..."
+UNFORMATTED=$(gofmt -l $(find . -name '*.go' -not -path "./proto/*" -not -path "./vendor/*"))
+if [ -n "$UNFORMATTED" ]; then
+    echo "❌ The following files are not formatted:"
+    echo "$UNFORMATTED"
+    echo "Run: gofmt -w ."
+    exit 1
+fi
+
+echo "Running go vet..."
+go vet ./...
+
+echo "Running golangci-lint..."
+golangci-lint run --new-from-rev=HEAD~1 ./... || true
+
+echo "Running tests..."
+go test -short ./...
+
+echo "✅ Pre-commit checks passed"

@@ -10,15 +10,15 @@ import (
 
 // Config for Postgres connection.
 type Config struct {
-	Host         string
-	Port         int
-	User         string
-	Password     string
-	Database     string
-	MaxConns     int32
-	MinConns     int32
-	MaxConnIdle  time.Duration
-	MaxConnLife  time.Duration
+	Host        string
+	Port        int
+	User        string
+	Password    string
+	Database    string
+	MaxConns    int32
+	MinConns    int32
+	MaxConnIdle time.Duration
+	MaxConnLife time.Duration
 }
 
 // NewPostgresPool creates a connection pool to Postgres.

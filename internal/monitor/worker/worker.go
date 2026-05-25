@@ -23,22 +23,22 @@ type CheckRepository interface {
 }
 
 type Config struct {
-	URLServiceAddr   string
-	KafkaBrokers     []string
-	PollInterval     time.Duration
-	HTTPTimeout      time.Duration
-	MaxConcurrency   int
-	CheckedTopic     string
+	URLServiceAddr     string
+	KafkaBrokers       []string
+	PollInterval       time.Duration
+	HTTPTimeout        time.Duration
+	MaxConcurrency     int
+	CheckedTopic       string
 	StatusChangedTopic string
 }
 
 type Worker struct {
-	cfg         Config
-	repo        CheckRepository
-	urlClient   urlpb.URLServiceClient
-	httpClient  *http.Client
-	checkedW    *kafka.Writer
-	statusChW   *kafka.Writer
+	cfg        Config
+	repo       CheckRepository
+	urlClient  urlpb.URLServiceClient
+	httpClient *http.Client
+	checkedW   *kafka.Writer
+	statusChW  *kafka.Writer
 }
 
 func New(cfg Config, repo CheckRepository) (*Worker, error) {

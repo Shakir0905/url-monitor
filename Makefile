@@ -34,3 +34,19 @@ migrate-down:
 
 clean:
 	docker compose down -v
+
+.PHONY: install-hooks lint test fmt
+
+install-hooks:
+	cp scripts/hooks/pre-commit .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
+
+lint:
+	golangci-lint run ./...
+
+test:
+	go test -v ./...
+
+fmt:
+	gofmt -w .
+	goimports -w .

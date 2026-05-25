@@ -1,0 +1,31 @@
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck      # незаигнорированные ошибки
+    - gosimple      # упрощения кода
+    - govet         # подозрительные конструкции
+    - ineffassign   # бессмысленные присваивания
+    - staticcheck   # глубокая статика
+    - typecheck     # проверка типов
+    - unused        # неиспользуемый код
+    - gofmt         # форматирование
+    - goimports     # порядок импортов
+    - misspell      # опечатки
+    - unparam       # неиспользуемые параметры
+    - gocyclo       # цикломатическая сложность
+    - bodyclose     # незакрытые HTTP body
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unparam

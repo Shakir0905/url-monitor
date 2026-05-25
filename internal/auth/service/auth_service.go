@@ -23,9 +23,9 @@ type UserRepository interface {
 
 // Config for AuthService.
 type Config struct {
-	JWTSecret    string
-	JWTTTL       time.Duration
-	BcryptCost   int // 10-12 is fine, 14+ for paranoid
+	JWTSecret      string
+	JWTTTL         time.Duration
+	BcryptCost     int // 10-12 is fine, 14+ for paranoid
 	MinPasswordLen int
 }
 
