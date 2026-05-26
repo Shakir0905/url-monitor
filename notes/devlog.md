@@ -34,3 +34,4 @@ Learning notes and references.
 - 2026-05-23: Read about Postgres index types and when to use each
 - 2026-05-23: Notes on JWT vs session-based authentication trade-offs
 - 2026-05-26: Notes on Docker layer caching
+- 2026-05-26: Reviewed bcrypt vs argon2 trade-offs
