@@ -33,3 +33,4 @@ Learning notes and references.
 - 2026-05-22: Read about distributed consensus algorithms (Raft, Paxos)
 - 2026-05-23: Read about Postgres index types and when to use each
 - 2026-05-23: Notes on JWT vs session-based authentication trade-offs
+- 2026-05-26: Notes on Docker layer caching
