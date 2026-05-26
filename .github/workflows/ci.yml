@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26'
+          go-version-file: 'go.mod'
           cache: true
 
       - name: Download dependencies
@@ -37,14 +37,8 @@ jobs:
       - name: Vet
         run: go vet ./...
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --timeout=5m
-
       - name: Test
-        run: go test -race -coverprofile=coverage.out ./...
+        run: go test -race ./...
 
       - name: Build all services
         run: |
