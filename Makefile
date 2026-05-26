@@ -50,3 +50,30 @@ test:
 fmt:
 	gofmt -w .
 	goimports -w .
+
+.PHONY: hooks-off hooks-on hooks-status
+
+hooks-off:
+	@if [ -f .git/hooks/pre-commit ]; then \
+		mv .git/hooks/pre-commit .git/hooks/pre-commit.bak; \
+		echo "✓ Pre-commit hook disabled"; \
+	else \
+		echo "Hook already disabled or not installed"; \
+	fi
+
+hooks-on:
+	@if [ -f .git/hooks/pre-commit.bak ]; then \
+		mv .git/hooks/pre-commit.bak .git/hooks/pre-commit; \
+		echo "✓ Pre-commit hook enabled"; \
+	else \
+		echo "No .bak file found - run 'make install-hooks' instead"; \
+	fi
+
+hooks-status:
+	@if [ -f .git/hooks/pre-commit ]; then \
+		echo "Pre-commit hook: ENABLED"; \
+	elif [ -f .git/hooks/pre-commit.bak ]; then \
+		echo "Pre-commit hook: DISABLED (.bak exists)"; \
+	else \
+		echo "Pre-commit hook: NOT INSTALLED"; \
+	fi
